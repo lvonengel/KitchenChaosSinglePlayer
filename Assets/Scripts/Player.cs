@@ -1,24 +1,49 @@
 using System;
 using UnityEngine;
 
+/// <summary>
+/// Represents the player in the game.
+/// Handles movement, interaction, input listening, and holding kitchen objects.
+/// </summary>
 public class Player : MonoBehaviour, IKitchenObjectParent {
 
     public static Player Instance { get; private set; }
 
+    /// <summary>
+    /// Fired when player successfully picks up a kitchen object
+    /// </summary>
     public event EventHandler OnPickedSomething;
+
+    /// <summary>
+    /// Fired whenever the currently selected counter changes
+    /// </summary>
     public event EventHandler<onSelectedCounterChangedEventArgs> onSelectedCounterChanged;
     public class onSelectedCounterChangedEventArgs : EventArgs {
         public BaseCounter selectedCounter;
     }
 
+    // the player movement speed
     [SerializeField] private float moveSpeed = 7f;
     [SerializeField] private GameInput gameInput;
     [SerializeField] private LayerMask countersLayerMask;
+
+    // the transform the player holds kitchen objects
     [SerializeField] private Transform kitchenObjectHoldPoint;
 
+    // whether the player is walking
     private bool isWalking;
+
+    //cache of the last interaction direction
     private Vector3 lastInteractDir;
+
+    /// <summary>
+    /// The counter the player has currently selected
+    /// </summary>
     private BaseCounter selectedCounter;
+
+    /// <summary>
+    /// The kitchen object the player currently holds
+    /// </summary>
     private KitchenObject kitchenObject;
 
     private void Awake() {
@@ -33,7 +58,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         gameInput.OnInteractAlternateAction += GameInput_OnInteractAlternateAction;
     }
 
-    // Listens for signal
+    // Fires when player interacts
     private void GameInput_OnInteractAction(object sender, System.EventArgs e) {
         if (!KitchenGameManager.Instance.IsGamePlaying()) return;
         
@@ -42,7 +67,7 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         }
     }
 
-    // Listens for signal
+    // Fires when player alternate interacts
     private void GameInput_OnInteractAlternateAction(object sender, System.EventArgs e) {
         if (!KitchenGameManager.Instance.IsGamePlaying()) return;
         
@@ -57,10 +82,17 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         HandleInteractions();
     }
 
+    /// <summary>
+    /// Checks if player is actively walking
+    /// </summary>
+    /// <returns>True if player is walking, otherwise false</returns>
     public bool IsWalking() {
         return isWalking;
     }
 
+    /// <summary>
+    /// Does raycast based on movement direction to determine which counter to interact with
+    /// </summary>
     private void HandleInteractions() {
         Vector2 inputVector = gameInput.GetMovementVectorNormalized();
 
@@ -89,6 +121,9 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         }
     }
 
+    /// <summary>
+    /// Moves the player using CapsuleCase and updates whether the player is walking.
+    /// </summary>
     private void HandleMovement() {
         Vector2 inputVector = gameInput.GetMovementVectorNormalized();
 
@@ -137,6 +172,12 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         transform.forward = Vector3.Slerp(transform.forward, moveDir, Time.deltaTime * rotateSpeed);
     }
 
+    #region getters/setters
+
+    /// <summary>
+    /// Sets the currently selected counter
+    /// </summary>
+    /// <param name="selectedCounter">The selected counter</param>
     private void SetSelectedCounter(BaseCounter selectedCounter) {
         this.selectedCounter = selectedCounter;
         // assigns selected counter to the field onSelectedCounterChangedEventArgs
@@ -145,10 +186,18 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         });
     }
 
+    /// <summary>
+    /// Gets the transform where held kitchen objects should follow
+    /// </summary>
+    /// <returns>Transform that kitchen objects are</returns>
     public Transform GetKitchenObjectFollowTransform() {
         return kitchenObjectHoldPoint;
     }
 
+    /// <summary>
+    /// Sets the kitchen object to the player
+    /// </summary>
+    /// <param name="kitchenObject">The kitchen object the player holds</param>
     public void SetKitchenObject(KitchenObject kitchenObject) {
         this.kitchenObject = kitchenObject;
 
@@ -157,15 +206,28 @@ public class Player : MonoBehaviour, IKitchenObjectParent {
         }
     }
 
+    /// <summary>
+    /// Gets the currently held kitchen object
+    /// </summary>
+    /// <returns>Currently held kitchen object</returns>
     public KitchenObject GetKitchenObject() {
         return kitchenObject;
     }
 
+    /// <summary>
+    /// Clears the held kitchen object from player
+    /// </summary>
     public void ClearKitchenObject() {
         kitchenObject = null;
     }
     
+    /// <summary>
+    /// Checks whether the player is holding a kitchen object
+    /// </summary>
+    /// <returns>True if the player is holding a kitchen object, false otherwise</returns>
     public bool HasKitchenObject() {
         return kitchenObject != null;
     }
+
+    #endregion
 }
